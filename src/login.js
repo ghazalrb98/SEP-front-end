@@ -1,7 +1,10 @@
 import { useState } from "react";
 import styles from "./Login.module.css";
+import { useNavigate } from "react-router-dom";
 
 export function Login() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({});
@@ -47,6 +50,9 @@ export function Login() {
 
       if (user) {
         setMessage(`Welcome ${user.name || "back"}!`);
+
+        sessionStorage.setItem("user", JSON.stringify(user));
+        navigate("/welcome", { state: { user } });
       } else {
         throw Error("No account found with that email.");
       }
