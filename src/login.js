@@ -5,37 +5,26 @@ import { useNavigate } from "react-router-dom";
 export function Login() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [showPw, setShowPw] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function validate() {
-    const e = {};
-    if (!form.email) e.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      e.email = "Enter a valid email";
-    if (!form.password) e.password = "Password is required";
-    else if (form.password.length < 6) e.password = "Min 6 characters";
-    setErrors(e);
-    return Object.keys(e).length === 0;
+  function validateEmail(email) {
+    if (!email) return "Email is Required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return "Enter a valid email.";
+    return "";
   }
 
-  function handleChange(ev) {
-    setForm((f) => ({ ...f, [ev.target.name]: ev.target.value }));
-    setMessage("");
-  }
-
-  function handleSubmit(ev) {
+  async function handleSubmit(ev) {
     ev.preventDefault();
+    setMessage("");
+    setError("");
 
-    if (!validate()) return;
+    const emailValidationError = validateEmail(email);
+    if (emailValidationError) return setError(emailValidationError);
 
-    handleLogin();
-  }
-
-  async function handleLogin() {
     setLoading(true);
 
     try {
@@ -46,18 +35,30 @@ export function Login() {
       if (!res.ok) throw Error("Could not connect the server");
 
       const users = await res.json();
-      const user = users.find((u) => u.email === form.email.trim());
+      const user = users.find((u) => u.email === email.trim());
 
-      if (user) {
-        setMessage(`Welcome ${user.name || "back"}!`);
+      if (!user) throw Error("Couldn't find any user with this email.");
 
-        sessionStorage.setItem("user", JSON.stringify(user));
-        navigate("/welcome", { state: { user } });
-      } else {
-        throw Error("No account found with that email.");
-      }
+      const userLoginRes = await fetch(`/login?userId=${user.id}`, {
+        method: "POST",
+      });
+
+      if (!userLoginRes.ok) throw Error("Couldn't login. Try again later");
+
+      const data = await userLoginRes.json();
+      localStorage.setItem("token", data.token);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          name: user.name,
+          role: user.role,
+        })
+      );
+
+      setMessage(`Welcome ${user.name || "back"}!`);
+      navigate("/welcome", { state: { user } });
     } catch (err) {
-      setErrors({ form: err.message });
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -69,55 +70,23 @@ export function Login() {
         <h1 className={styles.title}>Sign in</h1>
 
         {message && <div className={styles.success}>{message}</div>}
-        {errors.form && <div className={styles.error}>{errors.form}</div>}
+        {error && <div className={styles.error}>{error}</div>}
 
         <label className={styles.label}>
           Email
           <input
             className={styles.input}
             type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            onBlur={validate}
-            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
+            autoComplete="email"
             required
           />
-          {errors.email && (
-            <span className={styles.errorText}>{errors.email}</span>
-          )}
-        </label>
-
-        <label className={styles.label}>
-          Password
-          <div className={styles.passwordWrapper}>
-            <input
-              className={styles.passwordInput}
-              type={showPw ? "text" : "password"}
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              onBlur={validate}
-              autoComplete="current-password"
-              placeholder="••••••••"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPw((v) => !v)}
-              className={styles.showBtn}
-            >
-              {showPw ? "Hide" : "Show"}
-            </button>
-          </div>
-          {errors.password && (
-            <span className={styles.errorText}>{errors.password}</span>
-          )}
         </label>
 
         <button type="submit" className={styles.button} disabled={loading}>
-          {loading ? "Checking..." : "Login"}
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <p className={styles.helper}>SEP - Swedish Event Planner</p>

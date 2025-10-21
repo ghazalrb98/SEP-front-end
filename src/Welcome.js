@@ -14,6 +14,7 @@ export function Welcome() {
   if (!user) return <Navigate to="/" replace />;
 
   function handleLogOut() {
+    sessionStorage.removeItem("token");
     sessionStorage.removeItem("user");
     navigate("/", { replace: true });
   }
