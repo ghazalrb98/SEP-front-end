@@ -1,0 +1,160 @@
+.wrap {
+  display: grid;
+  gap: 12px;
+}
+.headerRow {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.titleGroup {
+  display: grid;
+  gap: 2px;
+}
+.h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+.sub {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.search {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  min-width: 260px;
+}
+.select {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+.refresh {
+  padding: 8px 12px;
+  border: 1px solid #0f172a;
+  background: #0f172a;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.tableWrap {
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table thead th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+.titleCell {
+  font-weight: 600;
+}
+.descCell {
+  color: #475569;
+  max-width: 540px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.empty {
+  text-align: center;
+  color: #64748b;
+  padding: 24px;
+}
+.right {
+  text-align: right;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+.gray {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.blue {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+.green {
+  background: #dcfce7;
+  color: #166534;
+}
+.red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #991b1b;
+  border-radius: 10px;
+}
+.linkBtn {
+  background: transparent;
+  border: 0;
+  color: #991b1b;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.skeletonRow td {
+  padding: 0;
+}
+.skeleton {
+  height: 40px;
+  background: linear-gradient(90deg, #f1f5f9, #e2e8f0, #f1f5f9);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 8px 2px;
+}

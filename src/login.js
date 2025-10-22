@@ -46,8 +46,8 @@ export function Login() {
       if (!userLoginRes.ok) throw Error("Couldn't login. Try again later");
 
       const data = await userLoginRes.json();
-      localStorage.setItem("token", data.token);
-      localStorage.setItem(
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem(
         "user",
         JSON.stringify({
           name: user.name,
@@ -56,7 +56,7 @@ export function Login() {
       );
 
       setMessage(`Welcome ${user.name || "back"}!`);
-      navigate("/welcome", { state: { user } });
+      navigate("/dashboard", { state: { user } });
     } catch (err) {
       setError(err.message);
     } finally {
