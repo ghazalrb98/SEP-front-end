@@ -33,6 +33,7 @@ export function Dashboard() {
             <li>
               <NavLink
                 to="requests"
+                end
                 className={({ isActive }) =>
                   isActive ? `${styles.link} ${styles.active}` : styles.link
                 }

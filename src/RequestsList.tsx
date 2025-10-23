@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./RequestsList.module.css";
 
 export type RequestDto = {
@@ -44,32 +44,35 @@ export function RequestsList() {
 
   const token = sessionStorage.getItem("token");
 
-  async function fetchRequests(signal?: AbortSignal | null) {
-    setLoading(true);
-    setError("");
+  const fetchRequests = useCallback(
+    async (signal?: AbortSignal | null) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      const res = await fetch("/events", {
-        headers: { Accept: "text/plain", Authorization: `Bearer ${token}` },
-        signal: signal ?? null,
-      });
+      try {
+        const res = await fetch("/events", {
+          headers: { Accept: "text/plain", Authorization: `Bearer ${token}` },
+          signal: signal ?? null,
+        });
 
-      if (!res.ok) throw new Error(`Failed to load requests (${res.status})`);
+        if (!res.ok) throw new Error(`Failed to load requests (${res.status})`);
 
-      const dataJson: RequestDto[] = await res.json();
-      setData(dataJson);
-    } catch (e: any) {
-      if (e.name !== "AbortError") setError(e.message || "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  }
+        const dataJson: RequestDto[] = await res.json();
+        setData(dataJson);
+      } catch (e: any) {
+        if (e.name !== "AbortError") setError(e.message || "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token]
+  );
 
   useEffect(() => {
     const ctrl = new AbortController();
     fetchRequests(ctrl.signal);
     return () => ctrl.abort();
-  }, []);
+  }, [fetchRequests]);
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -181,7 +184,7 @@ export function RequestsList() {
                       </span>
                     </td>
                     <td>{DATE(r.submittedAt)}</td>
-                    <td className={styles.right}>{budget}</td>
+                    <td>{budget}</td>
                   </tr>
                 );
               })}
