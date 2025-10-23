@@ -24,7 +24,7 @@ export function CreateRequest() {
     const newRequest = {
       title: title.trim(),
       description: description.trim(),
-      budgetEstimate: Number(budget),
+      budget: budget,
     };
 
     setIsLoading(true);
