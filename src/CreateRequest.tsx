@@ -10,7 +10,7 @@ export function CreateRequest() {
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [budget, setBudget] = useState(0);
+  const [budgetEstimate, setBudgetEstimate] = useState<number | "">("");
 
   const token = sessionStorage.getItem("token");
 
@@ -24,7 +24,7 @@ export function CreateRequest() {
     const newRequest = {
       title: title.trim(),
       description: description.trim(),
-      budget: budget,
+      budget: budgetEstimate,
     };
 
     setIsLoading(true);
@@ -84,8 +84,10 @@ export function CreateRequest() {
           <input
             type="number"
             className={styles.input}
-            value={budget}
-            onChange={(e) => setBudget(Number(e.target.value))}
+            value={budgetEstimate}
+            onChange={(e) =>
+              setBudgetEstimate(e.target.value ? Number(e.target.value) : "")
+            }
           />
         </label>
         <div className={styles.buttons}>

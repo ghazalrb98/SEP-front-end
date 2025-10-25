@@ -3,6 +3,7 @@ import { Login } from "./login";
 import { Dashboard } from "./Dashboard";
 import { RequestsList } from "./RequestsList";
 import { CreateRequest } from "./CreateRequest";
+import { RequestDetail } from "./RequestDetaill";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route index element={<Navigate to="requests" replace />} />
           <Route path="requests" element={<RequestsList />} />
           <Route path="requests/new" element={<CreateRequest />} />
+          <Route path="requests/:id" element={<RequestDetail />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

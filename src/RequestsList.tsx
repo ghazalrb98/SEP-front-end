@@ -1,39 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./RequestsList.module.css";
-
-export type RequestDto = {
-  id: string;
-  title: string;
-  description: string;
-  status: number;
-  submittedAt: string;
-  budgetEstimate: number;
-  approvedBudget: number;
-};
-
-const STATUS: Record<
-  number,
-  { label: string; tone: "blue" | "amber" | "green" | "gray" | "red" }
-> = {
-  1: { label: "Open", tone: "blue" },
-  2: { label: "In Progress", tone: "amber" },
-  3: { label: "Closed", tone: "green" },
-  4: { label: "Archived", tone: "gray" },
-  5: { label: "Rejected", tone: "red" },
-};
-
-const SEK = new Intl.NumberFormat("sv-SE", {
-  style: "currency",
-  currency: "SEK",
-  maximumFractionDigits: 0,
-});
-const DATE = (iso?: string) =>
-  iso
-    ? new Date(iso).toLocaleString("sv-SE", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "—";
+import { Link, useNavigate } from "react-router-dom";
+import { DATE, SEK, STATUS, type RequestDto } from "./Types/Requests";
 
 export function RequestsList() {
   const [data, setData] = useState<RequestDto[] | null>(null);
@@ -42,6 +10,7 @@ export function RequestsList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const navigate = useNavigate();
   const token = sessionStorage.getItem("token");
 
   const fetchRequests = useCallback(
@@ -173,9 +142,14 @@ export function RequestsList() {
                     ? `${SEK.format(r.budgetEstimate)} · Estimate`
                     : "—";
                 return (
-                  <tr key={r.id}>
+                  <tr
+                    key={r.id}
+                    onClick={() => navigate(`/dashboard/requests/${r.id}`)}
+                  >
                     <td className={styles.titleCell}>
-                      {r.title || "Untitled"}
+                      <Link to={`/dashboard/requests/${r.id}`}>
+                        {r.title || "Untitled"}
+                      </Link>
                     </td>
                     <td className={styles.descCell}>{r.description || "—"}</td>
                     <td>
