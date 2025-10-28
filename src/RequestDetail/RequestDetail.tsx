@@ -7,14 +7,16 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { DATE, ROLES, SEK, STATUS, type RequestDto } from "./Types/Requests";
+import { getStatusMeta, isInProgress, isOpen } from "../Types/Status";
+import type { RequestDto } from "../Types/Dtos";
+import { ROLES } from "../Types/Roles";
+import { DATE, SEK } from "../Utils/formatters";
 
 export function RequestDetail() {
+  // ---- Utils ----
   function getUser() {
-    const raw = sessionStorage.getItem("user");
-
+    const raw = sessionStorage.getItem("user") || localStorage.getItem("user");
     if (!raw) return null;
-
     try {
       return JSON.parse(raw);
     } catch {
@@ -22,7 +24,7 @@ export function RequestDetail() {
     }
   }
 
-  function setData(data: RequestDto) {
+  function applyData(data: RequestDto) {
     setItem(data);
     setTitle(data.title || "");
     setDescription(data.description || "");
@@ -30,23 +32,29 @@ export function RequestDetail() {
     setBudgetEstimate(
       Number.isFinite(data.budgetEstimate) ? data.budgetEstimate : ""
     );
-    setApprovalBudget(
+    setApprovedBudget(
       Number.isFinite(data.approvedBudget) ? data.approvedBudget : ""
     );
   }
 
-  const AUTHORIZED_ROLES_Edit = new Set(["CS", "SCS"]);
-  const AUTHORIZED_ROLES_APPROVAL_BUDGET = new Set(["FM"]);
+  // ---- Auth / role gates ----
+  const AUTHORIZED_ROLES_REVIEW = new Set(["CSO", "SCS"]); // who can approve/reject
+  const AUTHORIZED_ROLES_EDIT = new Set(["CS", "SCS"]); // who can edit fields
+  const AUTHORIZED_ROLES_FIN = new Set(["FM"]); // who can set approved budget
 
+  // ---- Routing / auth ----
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const token = sessionStorage.getItem("token");
+  const token =
+    sessionStorage.getItem("token") || localStorage.getItem("token");
   const user = getUser();
-  const role = user && ROLES[Number(user.role)]?.role;
-  const canEdit = role && AUTHORIZED_ROLES_Edit.has(role);
-  const ApprovalBudgetVisible =
-    user && AUTHORIZED_ROLES_APPROVAL_BUDGET.has(role);
+  const role = user ? ROLES[Number(user.role)]?.role : undefined;
 
+  const canEdit = !!role && AUTHORIZED_ROLES_EDIT.has(role);
+  const canReview = !!role && AUTHORIZED_ROLES_REVIEW.has(role);
+  const canSeeApprovedBudget = !!role && AUTHORIZED_ROLES_FIN.has(role);
+
+  // ---- Local state ----
   const [item, setItem] = useState<RequestDto | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -56,32 +64,33 @@ export function RequestDetail() {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<number>(1);
   const [budgetEstimate, setBudgetEstimate] = useState<number | "">("");
-  const [approvedBudget, setApprovalBudget] = useState<number | "">("");
+  const [approvedBudget, setApprovedBudget] = useState<number | "">("");
+  const [comment, setComment] = useState("");
 
-  const meta = useMemo(() => (item ? STATUS[item.status] : null), [item]);
+  const meta = useMemo(
+    () => (item ? getStatusMeta(item.status) : null),
+    [item]
+  );
 
+  // ---- Load one request ----
   const load = useCallback(
     async (signal?: AbortSignal | null) => {
       if (!id) return;
-
       setIsLoading(true);
       setError("");
-
       try {
         const res = await fetch(`/events/${id}`, {
           method: "GET",
           headers: {
-            Accept: "text/plain",
-            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
           },
           signal: signal ?? null,
         });
-
         if (!res.ok)
-          throw new Error(`Failed to load event request ${res.status}`);
-
+          throw new Error(`Failed to load event request (${res.status})`);
         const data: RequestDto = await res.json();
-        setData(data);
+        applyData(data);
       } catch (e: any) {
         if (e.name !== "AbortError") setError(e.message || "Unknown error");
       } finally {
@@ -91,16 +100,21 @@ export function RequestDetail() {
     [token, id]
   );
 
+  useEffect(() => {
+    const ctrl = new AbortController();
+    load(ctrl.signal);
+    return () => ctrl.abort();
+  }, [load]);
+
+  // ---- Save edits ----
   async function handleSave(e: FormEvent) {
     e.preventDefault();
-
     if (!id) return;
 
     setIsLoading(true);
     setError("");
-
     try {
-      const updatedData: RequestDto = {
+      const payload: RequestDto = {
         id,
         title: title.trim(),
         description: description.trim(),
@@ -115,19 +129,81 @@ export function RequestDetail() {
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify(updatedData),
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error(`Failed to save request ${res.status}`);
+      if (!res.ok) throw new Error(`Failed to save request (${res.status})`);
 
-      const updated: boolean = await res.json();
+      // If API returns boolean, we just trust and apply local payload.
+      // If API returns entity, prefer: const updated = await res.json(); applyData(updated);
+      const ok: boolean = await res.json();
+      if (!ok) return;
 
-      if (!updated) return;
-
-      setData(updatedData);
+      applyData(payload);
       setEditMode(false);
+    } catch (e: any) {
+      setError(e.message || "Unknown error");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // ---- Approve / Reject with comment ----
+  async function handleApprove(e: FormEvent) {
+    e.preventDefault();
+    if (!id) return;
+
+    try {
+      setError("");
+      setIsLoading(true);
+
+      const res = await fetch(`/reviews/approve/${id}`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify(comment),
+      });
+
+      if (!res.ok) throw new Error(`Failed to approve request (${res.status})`);
+
+      // Reload entity
+      const ctrl = new AbortController();
+      await load(ctrl.signal);
+      setComment("");
+    } catch (e: any) {
+      setError(e.message || "Unknown error");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleReject() {
+    if (!id) return;
+
+    try {
+      setError("");
+      setIsLoading(true);
+
+      const res = await fetch(`/reviews/reject/${id}`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify(comment),
+      });
+
+      if (!res.ok) throw new Error(`Failed to reject request (${res.status})`);
+
+      const ctrl = new AbortController();
+      await load(ctrl.signal);
+      setComment("");
     } catch (e: any) {
       setError(e.message || "Unknown error");
     } finally {
@@ -137,16 +213,11 @@ export function RequestDetail() {
 
   function handleCancel() {
     if (!item) return;
-    setData(item);
+    applyData(item);
     setEditMode(false);
   }
 
-  useEffect(() => {
-    const ctrl = new AbortController();
-    load(ctrl.signal);
-    return () => ctrl.abort();
-  }, [load]);
-
+  // ---- Guarded renders ----
   if (isLoading && !item) return <div className={styles.page}>Loading...</div>;
   if (error && !item)
     return (
@@ -157,15 +228,16 @@ export function RequestDetail() {
   if (!item) return <div className={styles.page}>Not found.</div>;
 
   const tone = meta?.tone ?? "gray";
+  const statusForView = item.status;
+  const canEditApprovedBudget =
+    canSeeApprovedBudget && isInProgress(statusForView); // finance + in-progress
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <button onClick={() => navigate("/dashboard/requests")}>← Back</button>
         <h2 className={styles.title}>Request #{item.id.slice(0, 8)}...</h2>
-        <span className={`{styles.badge} ${styles[tone]}`}>
-          {STATUS[item.status]?.label}
-        </span>
+        <span className={`${styles.badge} ${styles[tone]}`}>{meta?.label}</span>
         <div className={styles.spacer} />
         {canEdit && !editMode && (
           <button className={styles.primary} onClick={() => setEditMode(true)}>
@@ -173,6 +245,7 @@ export function RequestDetail() {
           </button>
         )}
       </header>
+
       {!editMode ? (
         <section className={styles.viewBox}>
           <div className={styles.row}>
@@ -238,6 +311,7 @@ export function RequestDetail() {
               min={0}
             />
           </label>
+
           <div className={styles.actions}>
             <button
               type="submit"
@@ -256,7 +330,8 @@ export function RequestDetail() {
           </div>
         </form>
       )}
-      {ApprovalBudgetVisible && (
+
+      {canEditApprovedBudget && isInProgress(statusForView) && (
         <form className={styles.form} onSubmit={handleSave}>
           <label className={styles.field}>
             Approved Budget (SEK)
@@ -265,7 +340,7 @@ export function RequestDetail() {
               type="number"
               value={approvedBudget}
               onChange={(e) =>
-                setApprovalBudget(
+                setApprovedBudget(
                   e.target.value === "" ? "" : Number(e.target.value)
                 )
               }
@@ -275,6 +350,35 @@ export function RequestDetail() {
           <div className={styles.actions}>
             <button className={styles.primary} disabled={isLoading}>
               {isLoading ? "Update…" : "Update"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {!isOpen(statusForView) && comment && (
+        <div className={styles.row}>
+          <div className={styles.label}>Comment</div>
+          <div className={styles.value}>{comment}</div>
+        </div>
+      )}
+
+      {/* SCS review section when status is Open */}
+      {canReview && isOpen(statusForView) && (
+        <form className={styles.form} onSubmit={handleApprove}>
+          {error && <div className={styles.error}>{error}</div>}
+          <label className={styles.field}>
+            Comment
+            <textarea
+              className={styles.textarea}
+              rows={4}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+          </label>
+          <div className={styles.actions}>
+            <button type="submit">Approve</button>
+            <button type="button" onClick={handleReject}>
+              Reject
             </button>
           </div>
         </form>

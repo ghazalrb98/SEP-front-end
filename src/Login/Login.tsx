@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import styles from "./Login.module.css";
 import { useNavigate } from "react-router-dom";
+import type { UserDto } from "../Types/Dtos";
 
 export function Login() {
   const navigate = useNavigate();
@@ -10,14 +11,14 @@ export function Login() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function validateEmail(email) {
+  function validateEmail(email: string) {
     if (!email) return "Email is Required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       return "Enter a valid email.";
     return "";
   }
 
-  async function handleSubmit(ev) {
+  async function handleSubmit(ev: FormEvent) {
     ev.preventDefault();
     setMessage("");
     setError("");
@@ -35,7 +36,7 @@ export function Login() {
       if (!res.ok) throw Error("Could not connect the server");
 
       const users = await res.json();
-      const user = users.find((u) => u.email === email.trim());
+      const user = users.find((u: UserDto) => u.email === email.trim());
 
       if (!user) throw Error("Couldn't find any user with this email.");
 
@@ -57,7 +58,7 @@ export function Login() {
 
       setMessage(`Welcome ${user.name || "back"}!`);
       navigate("/dashboard", { state: { user } });
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);

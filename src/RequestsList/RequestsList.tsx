@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./RequestsList.module.css";
-import { Link, useNavigate } from "react-router-dom";
-import { DATE, SEK, STATUS, type RequestDto } from "./Types/Requests";
+import { getStatusMeta, STATUS_META } from "../Types/Status";
+import type { RequestDto } from "../Types/Dtos";
+import { Request } from "../Request/Request";
 
 export function RequestsList() {
   const [data, setData] = useState<RequestDto[] | null>(null);
@@ -10,7 +11,6 @@ export function RequestsList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const navigate = useNavigate();
   const token = sessionStorage.getItem("token");
 
   const fetchRequests = useCallback(
@@ -50,7 +50,7 @@ export function RequestsList() {
       .filter((r) => (status === "all" ? true : String(r.status) === status))
       .filter((r) =>
         q
-          ? [r.title, r.description, STATUS[r.status]?.label].some((v) =>
+          ? [r.title, r.description, getStatusMeta(r.status).label].some((v) =>
               v?.toLowerCase().includes(q)
             )
           : true
@@ -84,7 +84,7 @@ export function RequestsList() {
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="all">All statuses</option>
-            {Object.entries(STATUS).map(([value, meta]) => (
+            {Object.entries(STATUS_META).map(([value, meta]) => (
               <option key={value} value={value}>
                 {meta.label}
               </option>
@@ -129,39 +129,7 @@ export function RequestsList() {
               </>
             )}
 
-            {!loading &&
-              rows.map((r) => {
-                const meta = STATUS[r.status] || {
-                  label: `Unknown (${r.status})`,
-                  tone: "gray" as const,
-                };
-                const budget =
-                  r.approvedBudget && r.approvedBudget > 0
-                    ? `${SEK.format(r.approvedBudget)} · Approved`
-                    : r.budgetEstimate && r.budgetEstimate > 0
-                    ? `${SEK.format(r.budgetEstimate)} · Estimate`
-                    : "—";
-                return (
-                  <tr
-                    key={r.id}
-                    onClick={() => navigate(`/dashboard/requests/${r.id}`)}
-                  >
-                    <td className={styles.titleCell}>
-                      <Link to={`/dashboard/requests/${r.id}`}>
-                        {r.title || "Untitled"}
-                      </Link>
-                    </td>
-                    <td className={styles.descCell}>{r.description || "—"}</td>
-                    <td>
-                      <span className={`${styles.badge} ${styles[meta.tone]}`}>
-                        {meta.label}
-                      </span>
-                    </td>
-                    <td>{DATE(r.submittedAt)}</td>
-                    <td>{budget}</td>
-                  </tr>
-                );
-              })}
+            {!loading && rows.map((r) => <Request {...r} />)}
 
             {!loading && rows.length === 0 && (
               <tr>

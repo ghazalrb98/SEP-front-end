@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Login } from "./login";
-import { Dashboard } from "./Dashboard";
-import { RequestsList } from "./RequestsList";
-import { CreateRequest } from "./CreateRequest";
-import { RequestDetail } from "./RequestDetaill";
+import { Login } from "./Login/Login";
+import { Dashboard } from "./Dashboard/Dashboard";
+import { RequestsList } from "./RequestsList/RequestsList";
+import { CreateRequest } from "./CreateRequest/CreateRequest";
+import { RequestDetail } from "./RequestDetail/RequestDetail";
 
 export default function App() {
   return (

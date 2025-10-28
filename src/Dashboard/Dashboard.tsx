@@ -6,6 +6,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import styles from "./Dashboard.module.css";
+import { ROLES } from "../Types/Roles";
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -56,7 +57,9 @@ export function Dashboard() {
         <div className={styles.spacer} />
         <div className={styles.userBox}>
           <div className={styles.userName} title={user?.name || user?.email}>
-            {user?.name ?? user?.email ?? "User"}
+            {`${user?.name ?? user?.email ?? "User"} (${
+              ROLES[user?.role]?.label
+            })`}
           </div>
           <button className={styles.logoutBtn} onClick={handleLogOut}>
             Log out

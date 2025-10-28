@@ -1,0 +1,39 @@
+.titleCell {
+  font-weight: 600;
+}
+.descCell {
+  color: #475569;
+  max-width: 540px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+.gray {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.blue {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+.green {
+  background: #dcfce7;
+  color: #166534;
+}
+.red {
+  background: #fee2e2;
+  color: #991b1b;
+}
