@@ -14,3 +14,11 @@ export type RequestDto = {
   budgetEstimate: number;
   approvedBudget: number;
 };
+
+export type ReviewDto = {
+  id: string;
+  eventId: string;
+  event: RequestDto;
+  comments: string;
+  submittedAt: string;
+};
