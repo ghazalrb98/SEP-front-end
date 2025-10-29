@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import styles from "./Login.module.css";
 import { useNavigate } from "react-router-dom";
 import type { UserDto } from "../Types/Dtos";
@@ -10,6 +10,7 @@ export function Login() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<UserDto[]>([]);
 
   function validateEmail(email: string) {
     if (!email) return "Email is Required";
@@ -18,26 +19,37 @@ export function Login() {
     return "";
   }
 
-  async function handleSubmit(ev: FormEvent) {
-    ev.preventDefault();
-    setMessage("");
-    setError("");
-
-    const emailValidationError = validateEmail(email);
-    if (emailValidationError) return setError(emailValidationError);
-
-    setLoading(true);
-
+  async function loadUsers() {
     try {
+      setMessage("");
+      setError("");
       const res = await fetch("/users", {
         method: "GET",
         headers: { Accept: "application/json" },
       });
-      if (!res.ok) throw Error("Could not connect the server");
+      if (!res.ok) throw Error("Could not connect to server");
 
       const users = await res.json();
-      const user = users.find((u: UserDto) => u.email === email.trim());
+      setUsers(users);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  async function handleSubmit(ev: FormEvent) {
+    ev.preventDefault();
+
+    try {
+      setMessage("");
+      setError("");
+
+      const user = users.find((u: UserDto) => u.email === email.trim());
       if (!user) throw Error("Couldn't find any user with this email.");
 
       const userLoginRes = await fetch(`/login?userId=${user.id}`, {
@@ -58,11 +70,16 @@ export function Login() {
 
       setMessage(`Welcome ${user.name || "back"}!`);
       navigate("/dashboard", { state: { user } });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (e: any) {
+      setError(e.message);
     } finally {
       setLoading(false);
     }
+
+    const emailValidationError = validateEmail(email);
+    if (emailValidationError) return setError(emailValidationError);
+
+    setLoading(true);
   }
 
   return (
@@ -75,15 +92,19 @@ export function Login() {
 
         <label className={styles.label}>
           Email
-          <input
+          <select
             className={styles.input}
-            type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
             required
-          />
+          >
+            <option value="">Select an email</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.email}>
+                {user.email}
+              </option>
+            ))}
+          </select>
         </label>
 
         <button type="submit" className={styles.button} disabled={loading}>

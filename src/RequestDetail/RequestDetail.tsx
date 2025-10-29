@@ -12,19 +12,9 @@ import type { RequestDto } from "../Types/Dtos";
 import { ROLES } from "../Types/Roles";
 import { DATE, SEK } from "../Utils/formatters";
 import RequestReview from "../RequestReview/RequestReview";
+import { getUser } from "../Utils/helperFunctions";
 
 export function RequestDetail() {
-  // ---- Utils ----
-  function getUser() {
-    const raw = sessionStorage.getItem("user") || localStorage.getItem("user");
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  }
-
   function applyData(data: RequestDto) {
     setItem(data);
     setTitle(data.title || "");
