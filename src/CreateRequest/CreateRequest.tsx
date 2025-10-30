@@ -3,12 +3,13 @@ import styles from "./CreateRequest.module.css";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../Utils/helperFunctions";
 import { ROLES } from "../Types/Roles";
+import { apiFetch } from "../api";
 
 export function CreateRequest() {
   const navigate = useNavigate();
 
   // ---- Auth / role gates ----
-  const AUTHORIZED_ROLES_CREATE = new Set(["CSO", "SCS", "FM"]);
+  const AUTHORIZED_ROLES_CREATE = new Set(["CS", "SCS", "FM"]);
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -37,7 +38,7 @@ export function CreateRequest() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/events/create", {
+      const res = await apiFetch("/events/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

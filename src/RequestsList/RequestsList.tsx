@@ -3,6 +3,7 @@ import styles from "./RequestsList.module.css";
 import { getStatusMeta, STATUS_META } from "../Types/Status";
 import type { RequestDto } from "../Types/Dtos";
 import { Request } from "../Request/Request";
+import { apiFetch } from "../api";
 
 export function RequestsList() {
   const [data, setData] = useState<RequestDto[] | null>(null);
@@ -19,7 +20,7 @@ export function RequestsList() {
       setError("");
 
       try {
-        const res = await fetch("/events", {
+        const res = await apiFetch("/events", {
           headers: { Accept: "text/plain", Authorization: `Bearer ${token}` },
           signal: signal ?? null,
         });

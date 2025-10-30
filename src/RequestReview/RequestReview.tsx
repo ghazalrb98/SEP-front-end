@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { ReviewDto } from "../Types/Dtos";
 import styles from "./RequestReview.module.css";
 import { STATUS_CODE, type StatusCode } from "../Types/Status";
+import { apiFetch } from "../api";
 
 export default function RequestReview({
   requestId,
@@ -25,7 +26,7 @@ export default function RequestReview({
       setIsLoading(true);
       setError("");
       try {
-        const res = await fetch(`/reviews/`, {
+        const res = await apiFetch(`/reviews/`, {
           method: "GET",
           headers: {
             Accept: "text/plain",
@@ -63,7 +64,7 @@ export default function RequestReview({
       setError("");
       setIsLoading(true);
 
-      const res = await fetch(`/reviews/approve/${requestId}`, {
+      const res = await apiFetch(`/reviews/approve/${requestId}`, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -94,7 +95,7 @@ export default function RequestReview({
       setError("");
       setIsLoading(true);
 
-      const res = await fetch(`/reviews/reject/${requestId}`, {
+      const res = await apiFetch(`/reviews/reject/${requestId}`, {
         method: "POST",
         headers: {
           Accept: "application/json",

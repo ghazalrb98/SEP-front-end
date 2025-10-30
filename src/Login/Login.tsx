@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import styles from "./Login.module.css";
 import { useNavigate } from "react-router-dom";
 import type { UserDto } from "../Types/Dtos";
+import { apiFetch } from "../api";
 
 export function Login() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export function Login() {
     try {
       setMessage("");
       setError("");
-      const res = await fetch("/users", {
+      const res = await apiFetch("/users", {
         method: "GET",
         headers: { Accept: "application/json" },
       });
@@ -52,7 +53,7 @@ export function Login() {
       const user = users.find((u: UserDto) => u.email === email.trim());
       if (!user) throw Error("Couldn't find any user with this email.");
 
-      const userLoginRes = await fetch(`/login?userId=${user.id}`, {
+      const userLoginRes = await apiFetch(`/login?userId=${user.id}`, {
         method: "POST",
       });
 

@@ -13,6 +13,7 @@ import { ROLES } from "../Types/Roles";
 import { DATE, SEK } from "../Utils/formatters";
 import RequestReview from "../RequestReview/RequestReview";
 import { getUser } from "../Utils/helperFunctions";
+import { apiFetch } from "../api";
 
 export function RequestDetail() {
   function applyData(data: RequestDto) {
@@ -28,7 +29,7 @@ export function RequestDetail() {
   }
 
   // ---- Auth / role gates ----
-  const AUTHORIZED_ROLES_REVIEW = new Set(["CSO", "SCS"]); // who can approve/reject
+  const AUTHORIZED_ROLES_REVIEW = new Set(["CS", "SCS"]); // who can approve/reject
   const AUTHORIZED_ROLES_EDIT = new Set(["CS", "SCS"]); // who can edit fields
   const AUTHORIZED_ROLES_FIN = new Set(["FM"]); // who can set approved budget
 
@@ -67,7 +68,7 @@ export function RequestDetail() {
       setIsLoading(true);
       setError("");
       try {
-        const res = await fetch(`/events/${id}`, {
+        const res = await apiFetch(`/events/${id}`, {
           method: "GET",
           headers: {
             Accept: "application/json",
@@ -112,7 +113,7 @@ export function RequestDetail() {
         approvedBudget: approvedBudget || 0,
       };
 
-      const res = await fetch(`/events/${id}`, {
+      const res = await apiFetch(`/events/${id}`, {
         method: "PUT",
         headers: {
           Accept: "application/json",
