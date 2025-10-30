@@ -3,8 +3,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --force
 COPY . .
-FROM node:18-alpine
+RUN npm run build
+FROM node:18-alpine AS production
 WORKDIR /app
-COPY --from=build /app /app
+RUN npm install -g serve
+COPY --from=build /app/build ./build
 EXPOSE 3000
-CMD ["npm", "start"]
+USER node
+CMD ["serve", "-s", "build", "-l", "3000"]
